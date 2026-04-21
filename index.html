@@ -721,36 +721,19 @@
       const { file } = selectedFiles[i];
       setProgress(`Uploading screenshot ${i + 1}/${selectedFiles.length}…`);
 
-      const urlRes = await fetch(`${WORKER_URL}/upload-url`, {
+      const form = new FormData();
+      form.append('file', file, file.name);
+
+      const res = await fetch(`${WORKER_URL}/upload`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contentType: file.type,
-          filename: file.name,
-          size: file.size,
-        }),
+        body: form,
       });
-      const urlData = await urlRes.json();
-      if (!urlRes.ok || urlData.error) {
-        throw new Error(urlData.error || `Upload URL failed (HTTP ${urlRes.status})`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.error) {
+        throw new Error(data.error || `Upload failed for "${file.name}" (HTTP ${res.status})`);
       }
 
-      const putHeaders = { 'Content-Type': file.type };
-      (urlData.headers || []).forEach((h) => {
-        // Skip headers browsers refuse to set on fetch (e.g. Content-Length).
-        if (!/^content-length$/i.test(h.key)) putHeaders[h.key] = h.value;
-      });
-
-      const putRes = await fetch(urlData.uploadUrl, {
-        method: 'PUT',
-        headers: putHeaders,
-        body: file,
-      });
-      if (!putRes.ok) {
-        throw new Error(`Upload failed for "${file.name}" (HTTP ${putRes.status})`);
-      }
-
-      uploaded.push({ url: urlData.assetUrl, filename: file.name });
+      uploaded.push({ url: data.url, filename: data.filename || file.name });
     }
     return uploaded;
   }
