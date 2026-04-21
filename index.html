@@ -247,6 +247,81 @@
       color: var(--accent);
     }
 
+    /* Screenshots */
+    .screenshot-drop {
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 0.8rem;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .screenshot-drop:hover {
+      border-color: var(--accent);
+      color: var(--text);
+      background: var(--accent-lo);
+    }
+
+    .screenshot-drop.dragging {
+      border-color: var(--accent);
+      background: var(--accent-lo);
+      color: var(--text);
+    }
+
+    .screenshot-previews {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .screenshot-previews:empty {
+      margin-top: 0;
+    }
+
+    .screenshot-thumb {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .screenshot-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .screenshot-thumb .remove-btn {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 0.85rem;
+      line-height: 1;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .screenshot-thumb .remove-btn:hover {
+      background: var(--danger);
+    }
+
     /* Divider */
     .divider {
       border: none;
@@ -426,9 +501,18 @@
       </div>
 
       <div class="field">
-        <label for="url">URL</label>
+        <label>Screenshots</label>
+        <input type="file" id="screenshots" accept="image/*" multiple hidden />
+        <div class="screenshot-drop" id="screenshot-drop">
+          Click or drop images here · PNG or JPG, up to 10MB each
+        </div>
+        <div class="screenshot-previews" id="screenshot-previews"></div>
+      </div>
+
+      <div class="field">
+        <label for="url">JAM/Video URL</label>
         <input type="text" id="url" placeholder="https://example.com/page-in-question" autocomplete="off" />
-        <div class="field-hint">Optional. Appended to the ticket description.</div>
+        <div class="field-hint">Optional. Add your JAM URL to help us reproduce and investigate in case of a bug.</div>
       </div>
 
       <div class="field">
@@ -488,6 +572,8 @@
   const selectedLabels = new Set();
   let labelsLoaded = false;
   let customers = [];
+  const selectedFiles = []; // [{ file, id, previewUrl }]
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
   // ── Fetch labels on page load ────────────────────────────────────────────────
   async function loadLabels() {
@@ -558,6 +644,117 @@
     }
   }
 
+  // ── Screenshot picker ────────────────────────────────────────────────────────
+  const dropZone = document.getElementById('screenshot-drop');
+  const fileInput = document.getElementById('screenshots');
+  const previews = document.getElementById('screenshot-previews');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragging');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragging'));
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragging');
+    addFiles(e.dataTransfer.files);
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    addFiles(e.target.files);
+    e.target.value = '';
+  });
+
+  function addFiles(fileList) {
+    Array.from(fileList).forEach((file) => {
+      if (!file.type.startsWith('image/')) {
+        setStatus(`"${file.name}" is not an image — skipped.`, 'error');
+        return;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        setStatus(`"${file.name}" is larger than 10MB — skipped.`, 'error');
+        return;
+      }
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const previewUrl = URL.createObjectURL(file);
+      selectedFiles.push({ file, id, previewUrl });
+      renderThumb({ file, id, previewUrl });
+    });
+  }
+
+  function renderThumb({ file, id, previewUrl }) {
+    const thumb = document.createElement('div');
+    thumb.className = 'screenshot-thumb';
+    thumb.dataset.id = id;
+    thumb.title = file.name;
+
+    const img = document.createElement('img');
+    img.src = previewUrl;
+    img.alt = file.name;
+    thumb.appendChild(img);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'remove-btn';
+    removeBtn.textContent = '×';
+    removeBtn.setAttribute('aria-label', `Remove ${file.name}`);
+    removeBtn.addEventListener('click', () => removeFile(id));
+    thumb.appendChild(removeBtn);
+
+    previews.appendChild(thumb);
+  }
+
+  function removeFile(id) {
+    const idx = selectedFiles.findIndex((f) => f.id === id);
+    if (idx >= 0) {
+      URL.revokeObjectURL(selectedFiles[idx].previewUrl);
+      selectedFiles.splice(idx, 1);
+    }
+    const thumb = previews.querySelector(`[data-id="${id}"]`);
+    if (thumb) thumb.remove();
+  }
+
+  async function uploadScreenshots(setProgress) {
+    const uploaded = [];
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const { file } = selectedFiles[i];
+      setProgress(`Uploading screenshot ${i + 1}/${selectedFiles.length}…`);
+
+      const urlRes = await fetch(`${WORKER_URL}/upload-url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contentType: file.type,
+          filename: file.name,
+          size: file.size,
+        }),
+      });
+      const urlData = await urlRes.json();
+      if (!urlRes.ok || urlData.error) {
+        throw new Error(urlData.error || `Upload URL failed (HTTP ${urlRes.status})`);
+      }
+
+      const putHeaders = { 'Content-Type': file.type };
+      (urlData.headers || []).forEach((h) => {
+        // Skip headers browsers refuse to set on fetch (e.g. Content-Length).
+        if (!/^content-length$/i.test(h.key)) putHeaders[h.key] = h.value;
+      });
+
+      const putRes = await fetch(urlData.uploadUrl, {
+        method: 'PUT',
+        headers: putHeaders,
+        body: file,
+      });
+      if (!putRes.ok) {
+        throw new Error(`Upload failed for "${file.name}" (HTTP ${putRes.status})`);
+      }
+
+      uploaded.push({ url: urlData.assetUrl, filename: file.name });
+    }
+    return uploaded;
+  }
+
   // Show a hint when the typed customer doesn't match an existing one.
   document.getElementById('customer').addEventListener('input', (e) => {
     const hint = document.getElementById('customer-hint');
@@ -618,6 +815,12 @@
     setStatus('Submitting…', '');
 
     try {
+      let attachments = [];
+      if (selectedFiles.length > 0) {
+        attachments = await uploadScreenshots((msg) => setStatus(msg, ''));
+      }
+
+      setStatus('Submitting…', '');
       const res = await fetch(`${WORKER_URL}/issue`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -628,6 +831,7 @@
           labelIds: [...selectedLabels],
           customerId: customerId || undefined,
           customerName: customerName || undefined,
+          attachments: attachments.length > 0 ? attachments : undefined,
         }),
       });
 
@@ -666,6 +870,9 @@
     const hint = document.getElementById('customer-hint');
     hint.textContent = 'Optional. Start typing to search.';
     hint.classList.remove('new-customer');
+    selectedFiles.forEach((f) => URL.revokeObjectURL(f.previewUrl));
+    selectedFiles.length = 0;
+    previews.innerHTML = '';
     selectedLabels.clear();
     document.querySelectorAll('.label-chip').forEach(c => c.classList.remove('selected'));
     setStatus('', '');
