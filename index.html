@@ -228,6 +228,17 @@
       font-size: 0.8rem;
     }
 
+    .field-hint {
+      margin-top: 0.4rem;
+      color: var(--muted);
+      font-size: 0.7rem;
+      line-height: 1.4;
+    }
+
+    .field-hint.new-customer {
+      color: var(--accent);
+    }
+
     /* Divider */
     .divider {
       border: none;
@@ -406,6 +417,19 @@
       </div>
 
       <div class="field">
+        <label for="url">URL</label>
+        <input type="text" id="url" placeholder="https://example.com/page-in-question" autocomplete="off" />
+        <div class="field-hint">Optional. Appended to the ticket description.</div>
+      </div>
+
+      <div class="field">
+        <label for="customer">Customer</label>
+        <input type="text" id="customer" list="customers-list" placeholder="Select or type a new customer…" autocomplete="off" />
+        <datalist id="customers-list"></datalist>
+        <div class="field-hint" id="customer-hint">Optional. Start typing to search.</div>
+      </div>
+
+      <div class="field">
         <label>Labels</label>
         <div class="labels-grid" id="labels-grid">
           <span class="labels-loading">
@@ -454,6 +478,7 @@
 
   const selectedLabels = new Set();
   let labelsLoaded = false;
+  let customers = [];
 
   // ── Fetch labels on page load ────────────────────────────────────────────────
   async function loadLabels() {
@@ -502,10 +527,53 @@
     }
   }
 
+  // ── Fetch customers on page load ─────────────────────────────────────────────
+  async function loadCustomers() {
+    const datalist = document.getElementById('customers-list');
+    const hint = document.getElementById('customer-hint');
+    try {
+      const res = await fetch(`${WORKER_URL}/customers`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      customers = data.customers || [];
+
+      datalist.innerHTML = '';
+      customers.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.name;
+        datalist.appendChild(opt);
+      });
+    } catch (err) {
+      hint.textContent = 'Could not load customers — you can still type a new name.';
+      console.error('Customers error:', err);
+    }
+  }
+
+  // Show a hint when the typed customer doesn't match an existing one.
+  document.getElementById('customer').addEventListener('input', (e) => {
+    const hint = document.getElementById('customer-hint');
+    const val = e.target.value.trim();
+    if (!val) {
+      hint.textContent = 'Optional. Start typing to search.';
+      hint.classList.remove('new-customer');
+      return;
+    }
+    const match = customers.find(c => c.name.toLowerCase() === val.toLowerCase());
+    if (match) {
+      hint.textContent = `Selected existing customer: ${match.name}`;
+      hint.classList.remove('new-customer');
+    } else {
+      hint.textContent = `"${val}" will be added as a new customer.`;
+      hint.classList.add('new-customer');
+    }
+  });
+
   // ── Submit ───────────────────────────────────────────────────────────────────
   document.getElementById('submit-btn').addEventListener('click', async () => {
     const title = document.getElementById('title').value.trim();
     const description = document.getElementById('description').value.trim();
+    const url = document.getElementById('url').value.trim();
+    const customerInput = document.getElementById('customer').value.trim();
     const btn = document.getElementById('submit-btn');
     const status = document.getElementById('status');
 
@@ -520,6 +588,20 @@
       document.getElementById('description').focus();
       return;
     }
+    if (url && !/^https?:\/\//i.test(url)) {
+      setStatus('URL must start with http:// or https://', 'error');
+      document.getElementById('url').focus();
+      return;
+    }
+
+    // Resolve customer: existing match → customerId, else new → customerName.
+    let customerId = null;
+    let customerName = null;
+    if (customerInput) {
+      const match = customers.find(c => c.name.toLowerCase() === customerInput.toLowerCase());
+      if (match) customerId = match.id;
+      else customerName = customerInput;
+    }
 
     // Loading state
     btn.disabled = true;
@@ -533,7 +615,10 @@
         body: JSON.stringify({
           title,
           description,
+          url: url || undefined,
           labelIds: [...selectedLabels],
+          customerId: customerId || undefined,
+          customerName: customerName || undefined,
         }),
       });
 
@@ -567,6 +652,11 @@
   document.getElementById('reset-btn').addEventListener('click', () => {
     document.getElementById('title').value = '';
     document.getElementById('description').value = '';
+    document.getElementById('url').value = '';
+    document.getElementById('customer').value = '';
+    const hint = document.getElementById('customer-hint');
+    hint.textContent = 'Optional. Start typing to search.';
+    hint.classList.remove('new-customer');
     selectedLabels.clear();
     document.querySelectorAll('.label-chip').forEach(c => c.classList.remove('selected'));
     setStatus('', '');
@@ -581,6 +671,7 @@
   }
 
   loadLabels();
+  loadCustomers();
 </script>
 </body>
 </html>
