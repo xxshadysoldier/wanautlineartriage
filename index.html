@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Submit Feedback</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── CONFIG ─────────────────────────────────────────────────── */
+    /* Replace with your Cloudflare Worker URL after deployment       */
+    /* ──────────────────────────────────────────────────────────────  */
+
+    :root {
+      --bg:        #0c0c0e;
+      --surface:   #131316;
+      --border:    #252529;
+      --border-hi: #3a3a42;
+      --text:      #e8e8ed;
+      --muted:     #6e6e7a;
+      --accent:    #7c6af7;
+      --accent-lo: rgba(124,106,247,0.12);
+      --danger:    #f76a6a;
+      --success:   #4ade80;
+      --radius:    6px;
+      --mono:      'DM Mono', monospace;
+      --serif:     'Instrument Serif', Georgia, serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 16px; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.875rem;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Subtle grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(124,106,247,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,106,247,0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    /* Header */
+    .header {
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      transform: translateY(12px);
+      animation: fadeUp 0.5s ease forwards;
+    }
+
+    .header-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    .header-eyebrow::before {
+      content: '';
+      display: block;
+      width: 20px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    .header h1 {
+      font-family: var(--serif);
+      font-size: 2.25rem;
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .header h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .header p {
+      margin-top: 0.75rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      opacity: 0;
+      transform: translateY(12px);
+      animation: fadeUp 0.5s 0.1s ease forwards;
+    }
+
+    /* Form fields */
+    .field {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    label .req {
+      color: var(--accent);
+      margin-left: 2px;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.875rem;
+      padding: 0.75rem 1rem;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      outline: none;
+      resize: none;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-lo);
+    }
+
+    input[type="text"]::placeholder,
+    textarea::placeholder {
+      color: #3e3e48;
+    }
+
+    textarea {
+      min-height: 140px;
+      line-height: 1.6;
+    }
+
+    /* Labels grid */
+    .labels-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .label-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      user-select: none;
+    }
+
+    .label-chip:hover {
+      border-color: var(--border-hi);
+      color: var(--text);
+    }
+
+    .label-chip.selected {
+      color: var(--text);
+      background: var(--accent-lo);
+      border-color: var(--accent);
+    }
+
+    .label-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .labels-loading {
+      color: var(--muted);
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .labels-error {
+      color: var(--danger);
+      font-size: 0.8rem;
+    }
+
+    /* Divider */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.75rem 0;
+    }
+
+    /* Submit */
+    .submit-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .status-msg {
+      font-size: 0.78rem;
+      color: var(--muted);
+      flex: 1;
+      min-height: 1.2em;
+      transition: color 0.2s;
+    }
+
+    .status-msg.error { color: var(--danger); }
+    .status-msg.success { color: var(--success); }
+
+    button[type="submit"] {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      padding: 0.7rem 1.4rem;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    button[type="submit"]:hover { opacity: 0.9; }
+    button[type="submit"]:active { transform: scale(0.98); }
+    button[type="submit"]:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    /* Success overlay */
+    .success-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 3rem 2rem;
+    }
+
+    .success-screen.visible { display: flex; }
+
+    .success-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(74,222,128,0.12);
+      border: 1px solid rgba(74,222,128,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+      font-size: 1.25rem;
+    }
+
+    .success-screen h2 {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .success-screen p {
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+
+    .success-link {
+      margin-top: 1.5rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--accent);
+      font-size: 0.78rem;
+      text-decoration: none;
+    }
+
+    .success-link:hover { opacity: 0.8; }
+
+    .reset-btn {
+      margin-top: 0.75rem;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .reset-btn:hover { border-color: var(--border-hi); color: var(--text); }
+
+    /* Spinner */
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: none;
+    }
+
+    .loading .spinner { display: block; }
+    .loading .btn-label { display: none; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 1.5rem;
+      text-align: center;
+      font-size: 0.7rem;
+      color: #3a3a44;
+      opacity: 0;
+      animation: fadeUp 0.5s 0.25s ease forwards;
+    }
+
+    .footer a { color: #555560; text-decoration: none; }
+    .footer a:hover { color: var(--muted); }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .header h1 { font-size: 1.75rem; }
+      .card { padding: 1.5rem; }
+      .submit-row { flex-direction: column; align-items: stretch; }
+      button[type="submit"] { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <div class="header">
+    <div class="header-eyebrow">Feedback</div>
+    <h1>Share your <em>thoughts.</em></h1>
+    <p>Report a bug, request a feature, or suggest an improvement.<br>We triage every submission.</p>
+  </div>
+
+  <div class="card" id="card">
+
+    <!-- Form view -->
+    <div id="form-view">
+      <div class="field">
+        <label for="title">Title <span class="req">*</span></label>
+        <input type="text" id="title" placeholder="Short, descriptive title…" autocomplete="off" />
+      </div>
+
+      <div class="field">
+        <label for="description">Description <span class="req">*</span></label>
+        <textarea id="description" placeholder="Describe the issue or feature in detail. Steps to reproduce, expected behaviour, context…"></textarea>
+      </div>
+
+      <div class="field">
+        <label>Labels</label>
+        <div class="labels-grid" id="labels-grid">
+          <span class="labels-loading">
+            <span class="spinner" style="display:block;border-top-color:var(--muted)"></span>
+            Loading labels…
+          </span>
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <div class="submit-row">
+        <span class="status-msg" id="status"></span>
+        <button type="submit" id="submit-btn">
+          <span class="spinner"></span>
+          <span class="btn-label">Submit →</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Success view -->
+    <div class="success-screen" id="success-view">
+      <div class="success-icon">✓</div>
+      <h2>Submitted!</h2>
+      <p>Your issue has been added to triage.<br>The team will review it shortly.</p>
+      <a class="success-link" id="issue-link" href="#" target="_blank" rel="noopener">
+        View in Linear ↗
+      </a>
+      <button class="reset-btn" id="reset-btn">Submit another</button>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    Powered by <a href="https://linear.app" target="_blank">Linear</a>
+  </div>
+
+</div>
+
+<script>
+  // ─────────────────────────────────────────────────────────────────────────────
+  //  CONFIG — update WORKER_URL after deploying your Cloudflare Worker
+  // ─────────────────────────────────────────────────────────────────────────────
+  const WORKER_URL = 'super-wave-89b0.sdembusiness.workers.dev';
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  const selectedLabels = new Set();
+  let labelsLoaded = false;
+
+  // ── Fetch labels on page load ────────────────────────────────────────────────
+  async function loadLabels() {
+    const grid = document.getElementById('labels-grid');
+    try {
+      const res = await fetch(`${WORKER_URL}/labels`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const { labels } = await res.json();
+
+      if (!labels || labels.length === 0) {
+        grid.innerHTML = '<span class="labels-error">No labels found in your workspace.</span>';
+        return;
+      }
+
+      grid.innerHTML = '';
+      labels.forEach(lbl => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'label-chip';
+        chip.dataset.id = lbl.id;
+
+        const dot = document.createElement('span');
+        dot.className = 'label-dot';
+        dot.style.background = lbl.color || '#666';
+
+        chip.appendChild(dot);
+        chip.appendChild(document.createTextNode(lbl.name));
+
+        chip.addEventListener('click', () => {
+          if (selectedLabels.has(lbl.id)) {
+            selectedLabels.delete(lbl.id);
+            chip.classList.remove('selected');
+          } else {
+            selectedLabels.add(lbl.id);
+            chip.classList.add('selected');
+          }
+        });
+
+        grid.appendChild(chip);
+      });
+
+      labelsLoaded = true;
+    } catch (err) {
+      grid.innerHTML = `<span class="labels-error">Could not load labels — check your Worker URL.</span>`;
+      console.error('Labels error:', err);
+    }
+  }
+
+  // ── Submit ───────────────────────────────────────────────────────────────────
+  document.getElementById('submit-btn').addEventListener('click', async () => {
+    const title = document.getElementById('title').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const btn = document.getElementById('submit-btn');
+    const status = document.getElementById('status');
+
+    // Validate
+    if (!title) {
+      setStatus('Title is required.', 'error');
+      document.getElementById('title').focus();
+      return;
+    }
+    if (!description) {
+      setStatus('Description is required.', 'error');
+      document.getElementById('description').focus();
+      return;
+    }
+
+    // Loading state
+    btn.disabled = true;
+    btn.classList.add('loading');
+    setStatus('Submitting…', '');
+
+    try {
+      const res = await fetch(`${WORKER_URL}/issue`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description,
+          labelIds: [...selectedLabels],
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+
+      // Show success screen
+      const issueLink = document.getElementById('issue-link');
+      if (data.issueUrl) {
+        issueLink.href = data.issueUrl;
+        issueLink.style.display = 'inline-flex';
+      } else {
+        issueLink.style.display = 'none';
+      }
+
+      document.getElementById('form-view').style.display = 'none';
+      document.getElementById('success-view').classList.add('visible');
+
+    } catch (err) {
+      setStatus(err.message || 'Something went wrong. Please try again.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+    }
+  });
+
+  // ── Reset ────────────────────────────────────────────────────────────────────
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    document.getElementById('title').value = '';
+    document.getElementById('description').value = '';
+    selectedLabels.clear();
+    document.querySelectorAll('.label-chip').forEach(c => c.classList.remove('selected'));
+    setStatus('', '');
+    document.getElementById('form-view').style.display = '';
+    document.getElementById('success-view').classList.remove('visible');
+  });
+
+  function setStatus(msg, type) {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    el.className = 'status-msg' + (type ? ` ${type}` : '');
+  }
+
+  loadLabels();
+</script>
+</body>
+</html>
