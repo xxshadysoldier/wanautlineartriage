@@ -1152,15 +1152,6 @@
         throw new Error(data.error || `HTTP ${res.status}`);
       }
 
-      // Show success screen
-      const issueLink = document.getElementById('issue-link');
-      if (data.issueUrl) {
-        issueLink.href = data.issueUrl;
-        issueLink.style.display = 'inline-flex';
-      } else {
-        issueLink.style.display = 'none';
-      }
-
       document.getElementById('form-view').style.display = 'none';
       document.getElementById('success-view').classList.add('visible');
 
