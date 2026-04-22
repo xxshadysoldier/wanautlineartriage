@@ -535,13 +535,23 @@
       </div>
 
       <div class="field">
-        <label>Labels</label>
-        <div class="labels-grid" id="labels-grid">
+        <label>Is this a bug, feature request or improvement you wish we do?</label>
+        <div class="labels-grid" id="labels-type">
           <span class="labels-loading">
             <span class="spinner" style="display:block;border-top-color:var(--muted)"></span>
             Loading labels…
           </span>
         </div>
+      </div>
+
+      <div class="field">
+        <label>In case of a bug, where is the bug located?</label>
+        <div class="labels-grid" id="labels-environment"></div>
+      </div>
+
+      <div class="field">
+        <label>What product is concerned?</label>
+        <div class="labels-grid" id="labels-product"></div>
       </div>
 
       <hr class="divider" />
@@ -585,49 +595,62 @@
   const selectedFiles = []; // [{ file, id, previewUrl }]
   const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
+  // Visible label groups — rendered in this exact order, only these names are shown.
+  const LABEL_GROUPS = [
+    { containerId: 'labels-type', names: ['Bug', 'Feature request', 'Improvement'] },
+    { containerId: 'labels-environment', names: ['Production', 'Staging'] },
+    { containerId: 'labels-product', names: ['Wanaut Admin', 'Wanaut Check in', 'Wanaut Mobile App', 'Wanaut Pro', 'Wanaut.com'] },
+  ];
+
+  function createLabelChip(lbl) {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'label-chip';
+    chip.dataset.id = lbl.id;
+
+    const dot = document.createElement('span');
+    dot.className = 'label-dot';
+    dot.style.background = lbl.color || '#666';
+
+    chip.appendChild(dot);
+    chip.appendChild(document.createTextNode(lbl.name));
+
+    chip.addEventListener('click', () => {
+      if (selectedLabels.has(lbl.id)) {
+        selectedLabels.delete(lbl.id);
+        chip.classList.remove('selected');
+      } else {
+        selectedLabels.add(lbl.id);
+        chip.classList.add('selected');
+      }
+    });
+
+    return chip;
+  }
+
   // ── Fetch labels on page load ────────────────────────────────────────────────
   async function loadLabels() {
-    const grid = document.getElementById('labels-grid');
+    const firstGrid = document.getElementById(LABEL_GROUPS[0].containerId);
     try {
       const res = await fetch(`${WORKER_URL}/labels`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const { labels } = await res.json();
 
-      if (!labels || labels.length === 0) {
-        grid.innerHTML = '<span class="labels-error">No labels found in your workspace.</span>';
-        return;
-      }
+      const byName = new Map((labels || []).map(l => [l.name.toLowerCase(), l]));
 
-      grid.innerHTML = '';
-      labels.forEach(lbl => {
-        const chip = document.createElement('button');
-        chip.type = 'button';
-        chip.className = 'label-chip';
-        chip.dataset.id = lbl.id;
-
-        const dot = document.createElement('span');
-        dot.className = 'label-dot';
-        dot.style.background = lbl.color || '#666';
-
-        chip.appendChild(dot);
-        chip.appendChild(document.createTextNode(lbl.name));
-
-        chip.addEventListener('click', () => {
-          if (selectedLabels.has(lbl.id)) {
-            selectedLabels.delete(lbl.id);
-            chip.classList.remove('selected');
-          } else {
-            selectedLabels.add(lbl.id);
-            chip.classList.add('selected');
-          }
+      LABEL_GROUPS.forEach(group => {
+        const container = document.getElementById(group.containerId);
+        container.innerHTML = '';
+        group.names.forEach(name => {
+          const lbl = byName.get(name.toLowerCase());
+          if (!lbl) return;
+          container.appendChild(createLabelChip(lbl));
         });
-
-        grid.appendChild(chip);
       });
 
       labelsLoaded = true;
     } catch (err) {
-      grid.innerHTML = `<span class="labels-error">Could not load labels — check your Worker URL.</span>`;
+      firstGrid.innerHTML = `<span class="labels-error">Could not load labels — check your Worker URL.</span>`;
       console.error('Labels error:', err);
     }
   }
