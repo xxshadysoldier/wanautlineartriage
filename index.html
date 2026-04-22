@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Submit Feedback</title>
+  <title data-i18n="pageTitle">Envoyer un retour</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -556,6 +556,34 @@
     :root[data-theme="dark"] .theme-toggle .icon-sun { display: none; }
     :root[data-theme="dark"] .theme-toggle .icon-moon { display: block; }
 
+    /* Language toggle */
+    .lang-toggle {
+      position: fixed;
+      top: 1rem;
+      right: 3.5rem;
+      z-index: 2;
+      height: 34px;
+      padding: 0 0.7rem;
+      border-radius: var(--radius);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      transition: border-color 0.15s;
+    }
+
+    .lang-toggle:hover { border-color: var(--border-hi); }
+
+    .lang-opt { transition: color 0.15s; }
+    .lang-opt.active { color: var(--text); font-weight: 500; }
+    .lang-sep { color: var(--border-hi); }
+
     /* Responsive */
     @media (max-width: 480px) {
       .header h1 { font-size: 1.75rem; }
@@ -567,7 +595,13 @@
 </head>
 <body>
 
-<button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch theme" title="Switch theme">
+<button type="button" class="lang-toggle" id="lang-toggle" aria-label="Changer de langue" data-i18n-aria="ariaLang">
+  <span class="lang-opt" data-lang="fr">FR</span>
+  <span class="lang-sep">/</span>
+  <span class="lang-opt" data-lang="en">EN</span>
+</button>
+
+<button type="button" class="theme-toggle" id="theme-toggle" aria-label="Changer de thème" title="Changer de thème" data-i18n-aria="ariaTheme" data-i18n-title="ariaTheme">
   <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="12" cy="12" r="4"/>
     <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
@@ -581,9 +615,9 @@
 
   <div class="header">
     <img class="logo" src="logo.png" alt="wanaut" />
-    <div class="header-eyebrow">Feedback</div>
-  
-    <p>Report a bug, request a feature, or suggest an improvement.</p>
+    <div class="header-eyebrow" data-i18n="eyebrow">Retour</div>
+
+    <p data-i18n="intro">Signalez un bug, demandez une fonctionnalité ou proposez une amélioration.</p>
   </div>
 
   <div class="card" id="card">
@@ -591,55 +625,55 @@
     <!-- Form view -->
     <div id="form-view">
       <div class="field">
-        <label for="title">Title <span class="req">*</span></label>
-        <input type="text" id="title" placeholder="Short, descriptive title…" autocomplete="off" />
+        <label for="title"><span data-i18n="titleLabel">Titre</span> <span class="req">*</span></label>
+        <input type="text" id="title" placeholder="Titre court et descriptif…" data-i18n-placeholder="titlePlaceholder" autocomplete="off" />
       </div>
 
       <div class="field">
-        <label for="description">Description <span class="req">*</span></label>
-        <textarea id="description" placeholder="Describe the issue or feature in detail. Steps to reproduce, expected behaviour, context…"></textarea>
+        <label for="description"><span data-i18n="descriptionLabel">Description</span> <span class="req">*</span></label>
+        <textarea id="description" placeholder="Décrivez le problème ou la fonctionnalité en détail. Étapes de reproduction, comportement attendu, contexte…" data-i18n-placeholder="descriptionPlaceholder"></textarea>
       </div>
 
       <div class="field">
-        <label>Screenshots</label>
+        <label data-i18n="screenshotsLabel">Captures d'écran</label>
         <input type="file" id="screenshots" accept="image/*" multiple hidden />
-        <div class="screenshot-drop" id="screenshot-drop">
-          Click or drop images here · PNG or JPG, up to 10MB each
+        <div class="screenshot-drop" id="screenshot-drop" data-i18n="screenshotDrop">
+          Cliquez ou déposez des images ici · PNG ou JPG, jusqu'à 10 Mo chacune
         </div>
         <div class="screenshot-previews" id="screenshot-previews"></div>
         <div class="screenshot-error" id="screenshot-error"></div>
       </div>
 
       <div class="field">
-        <label for="url">JAM/Video URL</label>
-        <input type="text" id="url" placeholder="https://example.com/page-in-question" autocomplete="off" />
-        <div class="field-hint">Optional. Add your JAM URL to help us reproduce and investigate in case of a bug.</div>
+        <label for="url" data-i18n="urlLabel">URL JAM/Vidéo</label>
+        <input type="text" id="url" placeholder="https://exemple.com/page-concernee" data-i18n-placeholder="urlPlaceholder" autocomplete="off" />
+        <div class="field-hint" data-i18n="urlHint">Optionnel. Ajoutez votre URL JAM pour nous aider à reproduire et investiguer en cas de bug.</div>
       </div>
 
       <div class="field">
-        <label for="customer">Customer</label>
-        <input type="text" id="customer" list="customers-list" placeholder="Select or type a new customer…" autocomplete="off" />
+        <label for="customer" data-i18n="customerLabel">Client</label>
+        <input type="text" id="customer" list="customers-list" placeholder="Sélectionnez ou saisissez un nouveau client…" data-i18n-placeholder="customerPlaceholder" autocomplete="off" />
         <datalist id="customers-list"></datalist>
-        <div class="field-hint" id="customer-hint">Optional. Start typing to search.</div>
+        <div class="field-hint" id="customer-hint" data-i18n="customerHintDefault">Optionnel. Commencez à taper pour rechercher.</div>
       </div>
 
       <div class="field">
-        <label>Is this a bug, feature request or improvement you wish we do?</label>
+        <label data-i18n="typeQuestion">S'agit-il d'un bug, d'une demande de fonctionnalité ou d'une amélioration&nbsp;?</label>
         <div class="labels-grid" id="labels-type">
           <span class="labels-loading">
             <span class="spinner" style="display:block;border-top-color:var(--muted)"></span>
-            Loading labels…
+            <span data-i18n="labelsLoading">Chargement des étiquettes…</span>
           </span>
         </div>
       </div>
 
       <div class="field">
-        <label>In case of a bug, where is the bug located?</label>
+        <label data-i18n="environmentQuestion">En cas de bug, où se situe-t-il&nbsp;?</label>
         <div class="labels-grid" id="labels-environment"></div>
       </div>
 
       <div class="field">
-        <label>What product is concerned?</label>
+        <label data-i18n="productQuestion">Quel produit est concerné&nbsp;?</label>
         <div class="labels-grid" id="labels-product"></div>
       </div>
 
@@ -649,7 +683,7 @@
         <span class="status-msg" id="status"></span>
         <button type="submit" id="submit-btn">
           <span class="spinner"></span>
-          <span class="btn-label">Submit →</span>
+          <span class="btn-label" data-i18n="submit">Envoyer →</span>
         </button>
       </div>
     </div>
@@ -657,16 +691,16 @@
     <!-- Success view -->
     <div class="success-screen" id="success-view">
       <div class="success-icon">✓</div>
-      <h2>Submitted!</h2>
-      <p>Your issue has been added to triage.<br>The team will review it shortly.</p>
-      
-      <button class="reset-btn" id="reset-btn">Submit another</button>
+      <h2 data-i18n="successTitle">Envoyé&nbsp;!</h2>
+      <p data-i18n-html="successBody">Votre demande a été ajoutée au tri.<br>L'équipe l'examinera prochainement.</p>
+
+      <button class="reset-btn" id="reset-btn" data-i18n="resetBtn">Envoyer une autre</button>
     </div>
 
   </div>
 
   <div class="footer">
-    Powered by <a href="https://wanaut.com" target="_blank">Wanaut</a>
+    <span data-i18n="footer">Propulsé par</span> <a href="https://wanaut.com" target="_blank">Wanaut</a>
   </div>
 
 </div>
@@ -691,6 +725,147 @@
     const next = current === 'dark' ? 'light' : 'dark';
     rootEl.setAttribute('data-theme', next);
     localStorage.setItem(THEME_KEY, next);
+  });
+
+  // ── i18n ─────────────────────────────────────────────────────────────────────
+  const LANG_KEY = 'wanaut-lang';
+  const DEFAULT_LANG = 'fr';
+
+  const translations = {
+    en: {
+      pageTitle: 'Submit Feedback',
+      eyebrow: 'Feedback',
+      intro: 'Report a bug, request a feature, or suggest an improvement.',
+      titleLabel: 'Title',
+      titlePlaceholder: 'Short, descriptive title…',
+      descriptionLabel: 'Description',
+      descriptionPlaceholder: 'Describe the issue or feature in detail. Steps to reproduce, expected behaviour, context…',
+      screenshotsLabel: 'Screenshots',
+      screenshotDrop: 'Click or drop images here · PNG or JPG, up to 10MB each',
+      urlLabel: 'JAM/Video URL',
+      urlPlaceholder: 'https://example.com/page-in-question',
+      urlHint: 'Optional. Add your JAM URL to help us reproduce and investigate in case of a bug.',
+      customerLabel: 'Customer',
+      customerPlaceholder: 'Select or type a new customer…',
+      customerHintDefault: 'Optional. Start typing to search.',
+      customerHintExisting: 'Selected existing customer: {name}',
+      customerHintNew: '"{name}" will be added as a new customer.',
+      customerLoadError: 'Could not load customers — you can still type a new name.',
+      labelsLoading: 'Loading labels…',
+      labelsError: 'Could not load labels — check your Worker URL.',
+      typeQuestion: 'Is this a bug, feature request or improvement you wish we do?',
+      environmentQuestion: 'In case of a bug, where is the bug located?',
+      productQuestion: 'What product is concerned?',
+      submit: 'Submit →',
+      submitting: 'Submitting…',
+      uploadProgress: 'Uploading screenshot {i}/{n}…',
+      successTitle: 'Submitted!',
+      successBody: 'Your issue has been added to triage.<br>The team will review it shortly.',
+      resetBtn: 'Submit another',
+      validateTitle: 'Title is required.',
+      validateDescription: 'Description is required.',
+      validateUrl: 'URL must start with http:// or https://',
+      errorGeneric: 'Something went wrong. Please try again.',
+      errorUpload: 'Upload failed for "{name}" (HTTP {status})',
+      errorNotImage: '"{name}" is not an image — skipped.',
+      errorTooLarge: '"{name}" is {size} — exceeds the 10MB limit.',
+      footer: 'Powered by',
+      ariaTheme: 'Switch theme',
+      ariaLang: 'Switch language',
+      ariaRemove: 'Remove {name}',
+    },
+    fr: {
+      pageTitle: 'Envoyer un retour',
+      eyebrow: 'Retour',
+      intro: 'Signalez un bug, demandez une fonctionnalité ou proposez une amélioration.',
+      titleLabel: 'Titre',
+      titlePlaceholder: 'Titre court et descriptif…',
+      descriptionLabel: 'Description',
+      descriptionPlaceholder: 'Décrivez le problème ou la fonctionnalité en détail. Étapes de reproduction, comportement attendu, contexte…',
+      screenshotsLabel: "Captures d'écran",
+      screenshotDrop: "Cliquez ou déposez des images ici · PNG ou JPG, jusqu'à 10 Mo chacune",
+      urlLabel: 'URL JAM/Vidéo',
+      urlPlaceholder: 'https://exemple.com/page-concernee',
+      urlHint: 'Optionnel. Ajoutez votre URL JAM pour nous aider à reproduire et investiguer en cas de bug.',
+      customerLabel: 'Client',
+      customerPlaceholder: 'Sélectionnez ou saisissez un nouveau client…',
+      customerHintDefault: 'Optionnel. Commencez à taper pour rechercher.',
+      customerHintExisting: 'Client existant sélectionné : {name}',
+      customerHintNew: '« {name} » sera ajouté comme nouveau client.',
+      customerLoadError: 'Impossible de charger les clients — vous pouvez toujours saisir un nouveau nom.',
+      labelsLoading: 'Chargement des étiquettes…',
+      labelsError: "Impossible de charger les étiquettes — vérifiez l'URL du Worker.",
+      typeQuestion: "S'agit-il d'un bug, d'une demande de fonctionnalité ou d'une amélioration ?",
+      environmentQuestion: 'En cas de bug, où se situe-t-il ?',
+      productQuestion: 'Quel produit est concerné ?',
+      submit: 'Envoyer →',
+      submitting: 'Envoi en cours…',
+      uploadProgress: 'Envoi de la capture {i}/{n}…',
+      successTitle: 'Envoyé !',
+      successBody: "Votre demande a été ajoutée au tri.<br>L'équipe l'examinera prochainement.",
+      resetBtn: 'Envoyer une autre',
+      validateTitle: 'Le titre est requis.',
+      validateDescription: 'La description est requise.',
+      validateUrl: "L'URL doit commencer par http:// ou https://",
+      errorGeneric: "Une erreur s'est produite. Veuillez réessayer.",
+      errorUpload: "Échec de l'envoi pour « {name} » (HTTP {status})",
+      errorNotImage: "« {name} » n'est pas une image — ignorée.",
+      errorTooLarge: '« {name} » fait {size} — dépasse la limite de 10 Mo.',
+      footer: 'Propulsé par',
+      ariaTheme: 'Changer de thème',
+      ariaLang: 'Changer de langue',
+      ariaRemove: 'Supprimer {name}',
+    },
+  };
+
+  let currentLang = DEFAULT_LANG;
+  const storedLang = localStorage.getItem(LANG_KEY);
+  if (storedLang === 'en' || storedLang === 'fr') currentLang = storedLang;
+
+  function t(key, params) {
+    let str = (translations[currentLang] && translations[currentLang][key])
+      || translations.en[key]
+      || key;
+    if (params) {
+      Object.keys(params).forEach(k => {
+        str = str.split(`{${k}}`).join(params[k]);
+      });
+    }
+    return str;
+  }
+
+  function applyLanguage(lang) {
+    currentLang = lang;
+    document.documentElement.lang = lang;
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      el.textContent = t(el.getAttribute('data-i18n'));
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      el.innerHTML = t(el.getAttribute('data-i18n-html'));
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      el.setAttribute('placeholder', t(el.getAttribute('data-i18n-placeholder')));
+    });
+    document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+      el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria')));
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      el.setAttribute('title', t(el.getAttribute('data-i18n-title')));
+    });
+
+    document.querySelectorAll('.lang-toggle .lang-opt').forEach(el => {
+      el.classList.toggle('active', el.dataset.lang === lang);
+    });
+
+    // Re-run context-dependent hints.
+    if (typeof refreshCustomerHint === 'function') refreshCustomerHint();
+  }
+
+  document.getElementById('lang-toggle').addEventListener('click', () => {
+    const next = currentLang === 'fr' ? 'en' : 'fr';
+    localStorage.setItem(LANG_KEY, next);
+    applyLanguage(next);
   });
 
   const selectedLabels = new Set();
@@ -754,7 +929,8 @@
 
       labelsLoaded = true;
     } catch (err) {
-      firstGrid.innerHTML = `<span class="labels-error">Could not load labels — check your Worker URL.</span>`;
+      firstGrid.innerHTML = `<span class="labels-error"></span>`;
+      firstGrid.querySelector('.labels-error').textContent = t('labelsError');
       console.error('Labels error:', err);
     }
   }
@@ -776,7 +952,8 @@
         datalist.appendChild(opt);
       });
     } catch (err) {
-      hint.textContent = 'Could not load customers — you can still type a new name.';
+      hint.textContent = t('customerLoadError');
+      hint.removeAttribute('data-i18n');
       console.error('Customers error:', err);
     }
   }
@@ -815,11 +992,11 @@
     const errors = [];
     Array.from(fileList).forEach((file) => {
       if (!file.type.startsWith('image/')) {
-        errors.push(`"${file.name}" is not an image — skipped.`);
+        errors.push(t('errorNotImage', { name: file.name }));
         return;
       }
       if (file.size > MAX_FILE_SIZE) {
-        errors.push(`"${file.name}" is ${formatSize(file.size)} — exceeds the 10MB limit.`);
+        errors.push(t('errorTooLarge', { name: file.name, size: formatSize(file.size) }));
         return;
       }
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -845,7 +1022,7 @@
     removeBtn.type = 'button';
     removeBtn.className = 'remove-btn';
     removeBtn.textContent = '×';
-    removeBtn.setAttribute('aria-label', `Remove ${file.name}`);
+    removeBtn.setAttribute('aria-label', t('ariaRemove', { name: file.name }));
     removeBtn.addEventListener('click', () => removeFile(id));
     thumb.appendChild(removeBtn);
 
@@ -866,7 +1043,7 @@
     const uploaded = [];
     for (let i = 0; i < selectedFiles.length; i++) {
       const { file } = selectedFiles[i];
-      setProgress(`Uploading screenshot ${i + 1}/${selectedFiles.length}…`);
+      setProgress(t('uploadProgress', { i: i + 1, n: selectedFiles.length }));
 
       const form = new FormData();
       form.append('file', file, file.name);
@@ -877,7 +1054,7 @@
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data.error) {
-        throw new Error(data.error || `Upload failed for "${file.name}" (HTTP ${res.status})`);
+        throw new Error(data.error || t('errorUpload', { name: file.name, status: res.status }));
       }
 
       uploaded.push({ url: data.url, filename: data.filename || file.name });
@@ -886,23 +1063,27 @@
   }
 
   // Show a hint when the typed customer doesn't match an existing one.
-  document.getElementById('customer').addEventListener('input', (e) => {
+  function refreshCustomerHint() {
     const hint = document.getElementById('customer-hint');
-    const val = e.target.value.trim();
+    const val = document.getElementById('customer').value.trim();
     if (!val) {
-      hint.textContent = 'Optional. Start typing to search.';
+      hint.textContent = t('customerHintDefault');
+      hint.setAttribute('data-i18n', 'customerHintDefault');
       hint.classList.remove('new-customer');
       return;
     }
+    hint.removeAttribute('data-i18n');
     const match = customers.find(c => c.name.toLowerCase() === val.toLowerCase());
     if (match) {
-      hint.textContent = `Selected existing customer: ${match.name}`;
+      hint.textContent = t('customerHintExisting', { name: match.name });
       hint.classList.remove('new-customer');
     } else {
-      hint.textContent = `"${val}" will be added as a new customer.`;
+      hint.textContent = t('customerHintNew', { name: val });
       hint.classList.add('new-customer');
     }
-  });
+  }
+
+  document.getElementById('customer').addEventListener('input', refreshCustomerHint);
 
   // ── Submit ───────────────────────────────────────────────────────────────────
   document.getElementById('submit-btn').addEventListener('click', async () => {
@@ -915,17 +1096,17 @@
 
     // Validate
     if (!title) {
-      setStatus('Title is required.', 'error');
+      setStatus(t('validateTitle'), 'error');
       document.getElementById('title').focus();
       return;
     }
     if (!description) {
-      setStatus('Description is required.', 'error');
+      setStatus(t('validateDescription'), 'error');
       document.getElementById('description').focus();
       return;
     }
     if (url && !/^https?:\/\//i.test(url)) {
-      setStatus('URL must start with http:// or https://', 'error');
+      setStatus(t('validateUrl'), 'error');
       document.getElementById('url').focus();
       return;
     }
@@ -942,7 +1123,7 @@
     // Loading state
     btn.disabled = true;
     btn.classList.add('loading');
-    setStatus('Submitting…', '');
+    setStatus(t('submitting'), '');
 
     try {
       let attachments = [];
@@ -950,7 +1131,7 @@
         attachments = await uploadScreenshots((msg) => setStatus(msg, ''));
       }
 
-      setStatus('Submitting…', '');
+      setStatus(t('submitting'), '');
       const res = await fetch(`${WORKER_URL}/issue`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -984,7 +1165,7 @@
       document.getElementById('success-view').classList.add('visible');
 
     } catch (err) {
-      setStatus(err.message || 'Something went wrong. Please try again.', 'error');
+      setStatus(err.message || t('errorGeneric'), 'error');
     } finally {
       btn.disabled = false;
       btn.classList.remove('loading');
@@ -997,9 +1178,7 @@
     document.getElementById('description').value = '';
     document.getElementById('url').value = '';
     document.getElementById('customer').value = '';
-    const hint = document.getElementById('customer-hint');
-    hint.textContent = 'Optional. Start typing to search.';
-    hint.classList.remove('new-customer');
+    refreshCustomerHint();
     selectedFiles.forEach((f) => URL.revokeObjectURL(f.previewUrl));
     selectedFiles.length = 0;
     previews.innerHTML = '';
@@ -1017,6 +1196,7 @@
     el.className = 'status-msg' + (type ? ` ${type}` : '');
   }
 
+  applyLanguage(currentLang);
   loadLabels();
   loadCustomers();
 </script>
