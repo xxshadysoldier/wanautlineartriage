@@ -282,6 +282,17 @@
       margin-top: 0;
     }
 
+    .screenshot-error {
+      margin-top: 0.5rem;
+      color: var(--danger);
+      font-size: 0.75rem;
+      line-height: 1.4;
+    }
+
+    .screenshot-error:empty {
+      display: none;
+    }
+
     .screenshot-thumb {
       position: relative;
       width: 64px;
@@ -507,6 +518,7 @@
           Click or drop images here · PNG or JPG, up to 10MB each
         </div>
         <div class="screenshot-previews" id="screenshot-previews"></div>
+        <div class="screenshot-error" id="screenshot-error"></div>
       </div>
 
       <div class="field">
@@ -664,14 +676,23 @@
     e.target.value = '';
   });
 
+  function setScreenshotError(msg) {
+    document.getElementById('screenshot-error').textContent = msg || '';
+  }
+
+  function formatSize(bytes) {
+    return (bytes / (1024 * 1024)).toFixed(1) + 'MB';
+  }
+
   function addFiles(fileList) {
+    const errors = [];
     Array.from(fileList).forEach((file) => {
       if (!file.type.startsWith('image/')) {
-        setStatus(`"${file.name}" is not an image — skipped.`, 'error');
+        errors.push(`"${file.name}" is not an image — skipped.`);
         return;
       }
       if (file.size > MAX_FILE_SIZE) {
-        setStatus(`"${file.name}" is larger than 10MB — skipped.`, 'error');
+        errors.push(`"${file.name}" is ${formatSize(file.size)} — exceeds the 10MB limit.`);
         return;
       }
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -679,6 +700,7 @@
       selectedFiles.push({ file, id, previewUrl });
       renderThumb({ file, id, previewUrl });
     });
+    setScreenshotError(errors.join(' '));
   }
 
   function renderThumb({ file, id, previewUrl }) {
@@ -854,6 +876,7 @@
     selectedFiles.forEach((f) => URL.revokeObjectURL(f.previewUrl));
     selectedFiles.length = 0;
     previews.innerHTML = '';
+    setScreenshotError('');
     selectedLabels.clear();
     document.querySelectorAll('.label-chip').forEach(c => c.classList.remove('selected'));
     setStatus('', '');
